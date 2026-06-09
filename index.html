@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weatherman AI Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Smooth transition for theme switching */
+        .theme-transition {
+            transition: background-color 0.5s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 antialiased selection:bg-blue-500 selection:text-white">
+
+    <div class="mb-6 flex gap-2 bg-white px-4 py-2 rounded-full shadow-md z-10">
+        <button id="btn-day" onclick="setTheme('day')" class="px-4 py-1.5 rounded-full text-sm font-semibold bg-blue-500 text-white shadow-xs cursor-pointer transition">Day Mode</button>
+        <button id="btn-night" onclick="setTheme('night')" class="px-4 py-1.5 rounded-full text-sm font-semibold bg-transparent text-slate-600 hover:bg-slate-100 cursor-pointer transition">Night Mode</button>
+    </div>
+
+    <div id="canvas-bg" class="w-full max-w-md rounded-[50px] p-6 shadow-2xl theme-transition bg-gradient-to-b from-sky-300 via-sky-100 to-amber-50 relative overflow-hidden border-8 border-white">
+        
+        <div id="vector-clouds" class="absolute inset-0 opacity-40 pointer-events-none theme-transition">
+            <div class="absolute top-12 -left-10 w-32 h-12 bg-white rounded-full filter blur-xs"></div>
+            <div class="absolute top-32 -right-8 w-40 h-16 bg-white rounded-full filter blur-xs"></div>
+        </div>
+
+        <div id="app-container" class="w-full bg-white/90 backdrop-blur-md rounded-[36px] shadow-lg overflow-hidden flex flex-col theme-transition text-slate-800 border border-white/50">
+            
+            <header class="p-4 flex justify-between items-center border-b border-slate-100 theme-transition">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-tr from-blue-500 to-amber-400 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-xs">W</div>
+                    <span class="font-bold text-lg tracking-tight">Weatherman <span class="text-blue-500 font-medium">AI</span></span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-slate-100/80 px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-slate-200/80 transition theme-transition" id="location-badge">
+                    <i class="fa-solid fa-location-dot text-blue-500"></i>
+                    <span>Chicago, IL</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                </div>
+            </header>
+
+            <main class="p-4 flex-1 space-y-4 max-h-[75vh] overflow-y-auto scrollbar-none">
+                
+                <section class="space-y-3">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl flex items-center justify-between border border-blue-100/50 theme-transition" id="hero-weather">
+                        <div>
+                            <h1 class="text-4xl font-black tracking-tight text-slate-900 theme-transition" id="hero-temp">72°F</h1>
+                            <p class="text-sm font-medium text-slate-600 mt-0.5 theme-transition" id="hero-status">Sunny • UV Index 6</p>
+                        </div>
+                        <i class="fa-solid fa-sun text-4xl text-amber-500 animate-spin-slow" id="hero-icon"></i>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-slate-50 p-2.5 rounded-xl text-center border border-slate-100 flex flex-col justify-between theme-transition">
+                            <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Morning</span>
+                            <i class="fa-solid fa-cloud-sun text-amber-400 text-xl my-2"></i>
+                            <div class="text-sm font-bold">58°F</div>
+                            <div class="text-[10px] text-slate-500 font-medium mb-2">UV 2</div>
+                            <button class="w-full py-1 text-[9px] font-bold bg-blue-500 hover:bg-blue-600 text-white rounded-md transition shadow-xs cursor-pointer">Get Forecast</button>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl text-center border border-slate-100 flex flex-col justify-between theme-transition">
+                            <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Afternoon</span>
+                            <i class="fa-solid fa-sun text-amber-500 text-xl my-2"></i>
+                            <div class="text-sm font-bold">76°F</div>
+                            <div class="text-[10px] text-slate-500 font-medium mb-2">UV 7</div>
+                            <button class="w-full py-1 text-[9px] font-bold bg-blue-500 hover:bg-blue-600 text-white rounded-md transition shadow-xs cursor-pointer">Get Forecast</button>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl text-center border border-slate-100 flex flex-col justify-between theme-transition">
+                            <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Evening</span>
+                            <i class="fa-solid fa-moon text-indigo-400 text-xl my-2"></i>
+                            <div class="text-sm font-bold">61°F</div>
+                            <div class="text-[10px] text-slate-500 font-medium mb-2">UV 0</div>
+                            <button class="w-full py-1 text-[9px] font-bold bg-blue-500 hover:bg-blue-600 text-white rounded-md transition shadow-xs cursor-pointer">Get Forecast</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-xl flex items-start gap-3 shadow-xs animate-pulse theme-transition" id="storm-alert">
+                    <div class="bg-rose-500 text-white p-2 rounded-lg shrink-0 mt-0.5">
+                        <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs uppercase tracking-wide text-rose-900 theme-transition" id="storm-title">Severe Storm Warning</h4>
+                        <p class="text-xs text-rose-700/90 mt-0.5 font-medium leading-relaxed theme-transition" id="storm-desc">Severe thunderstorm watch until 11:00 PM. Seek shelter if outdoors immediately.</p>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50/60 border border-emerald-100 p-3.5 rounded-2xl space-y-3 theme-transition" id="ai-chat-box">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[11px]"><i class="fa-solid fa-robot"></i></div>
+                        <span class="text-xs font-bold text-emerald-900 theme-transition" id="ai-title">Chat with AI Assistant</span>
+                    </div>
+                    <div class="bg-white px-3 py-2 rounded-xl text-xs text-slate-600 border border-slate-100 shadow-2xs theme-transition" id="ai-msg">
+                        Hello JS! Ready to plan your day based on today's weather?
+                    </div>
+                    <div class="flex gap-1.5">
+                        <input type="text" placeholder="Ask Weatherman..." class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-emerald-500 transition font-medium theme-transition" id="ai-input">
+                        <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <section class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Live News</h3>
+                    <div class="space-y-2">
+                        <div class="flex gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100 items-center theme-transition">
+                            <div class="w-12 h-12 bg-slate-200 rounded-lg shrink-0 flex items-center justify-center text-slate-400 text-lg"><i class="fa-solid fa-cloud-bolt"></i></div>
+                            <div>
+                                <h4 class="text-xs font-bold line-clamp-1">Bay Area braces for severe late-evening storms</h4>
+                                <span class="text-[10px] text-slate-400 font-medium">2 min ago</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100 items-center theme-transition">
+                            <div class="w-12 h-12 bg-slate-200 rounded-lg shrink-0 flex items-center justify-center text-slate-400 text-lg"><i class="fa-solid fa-bridge"></i></div>
+                            <div>
+                                <h4 class="text-xs font-bold line-clamp-1">Golden Gate Bridge reopens after thick fog delay</h4>
+                                <span class="text-[10px] text-slate-400 font-medium">14 min ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-2 gap-2">
+                    <div class="bg-amber-50/50 border border-amber-100 p-3 rounded-xl flex flex-col justify-between theme-transition" id="events-card">
+                        <div>
+                            <div class="flex items-center justify-between text-amber-800 theme-transition" id="events-text">
+                                <span class="text-[11px] font-bold uppercase tracking-wider">Local Events</span>
+                                <i class="fa-solid fa-calendar-day text-xs"></i>
+                            </div>
+                            <h4 class="text-xs font-bold mt-2">Sunset Jazz Coffee</h4>
+                            <p class="text-[10px] text-slate-500 font-medium mt-0.5">Today at 7:00 PM</p>
+                        </div>
+                        <span class="text-[9px] font-bold text-amber-700 mt-4 theme-transition" id="events-status"><i class="fa-solid fa-umbrella text-[8px] mr-1"></i>Indoors Event</span>
+                    </div>
+
+                    <div class="bg-indigo-50/40 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between theme-transition" id="social-card">
+                        <div>
+                            <div class="flex items-center justify-between text-indigo-800 theme-transition" id="social-text">
+                                <span class="text-[11px] font-bold uppercase tracking-wider">Social Vibe</span>
+                                <i class="fa-solid fa-share-nodes text-xs"></i>
+                            </div>
+                            <p class="text-xs italic text-slate-600 mt-2 font-medium line-clamp-2 theme-transition" id="social-msg">"Sun-drenched skyline at Oak St Beach! #SummerVibes"</p>
+                        </div>
+                        <div class="flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-heart text-rose-500 text-[10px]"></i>
+                            <span class="text-[9px] font-bold text-slate-400">1.2k Likes</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-2">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between theme-transition">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs theme-transition" id="trip-icon-bg"><i class="fa-solid fa-route"></i></div>
+                            <div>
+                                <h4 class="text-xs font-bold">Plan A Trip & Explore Venues</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">Riverwalk Patio Dinner Route</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-300"></i>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between theme-transition">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xs theme-transition" id="road-icon-bg"><i class="fa-solid fa-car"></i></div>
+                            <div>
+                                <h4 class="text-xs font-bold">Current Road Conditions</h4>
+                                <p class="text-[10px] text-emerald-600 font-bold theme-transition" id="road-text">Commute home: 24 min via US-101 (Clear)</p>
+                            </div>
+                        </div>
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                    </div>
+                </section>
+
+            </main>
+
+            <footer class="bg-slate-50/90 border-t border-slate-100 p-2 flex justify-around items-center text-slate-400 theme-transition" id="app-footer">
+                <button class="flex flex-col items-center gap-0.5 text-blue-500 cursor-pointer"><i class="fa-solid fa-house text-sm"></i><span class="text-[9px] font-bold">Home</span></button>
+                <button class="flex flex-col items-center gap-0.5 hover:text-slate-600 transition cursor-pointer"><i class="fa-solid fa-chart-simple text-sm"></i><span class="text-[9px] font-medium">Forecasts</span></button>
+                <button class="flex flex-col items-center gap-0.5 hover:text-slate-600 transition cursor-pointer"><i class="fa-solid fa-message text-sm"></i><span class="text-[9px] font-medium">AI Chat</span></button>
+                <button class="flex flex-col items-center gap-0.5 hover:text-slate-600 transition cursor-pointer"><i class="fa-solid fa-calendar text-sm"></i><span class="text-[9px] font-medium">Planner</span></button>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        function setTheme(theme) {
+            const canvasBg = document.getElementById('canvas-bg');
+            const appContainer = document.getElementById('app-container');
+            const locationBadge = document.getElementById('location-badge');
+            const heroWeather = document.getElementById('hero-weather');
+            const heroTemp = document.getElementById('hero-temp');
+            const heroStatus = document.getElementById('hero-status');
+            const heroIcon = document.getElementById('hero-icon');
+            const stormAlert = document.getElementById('storm-alert');
+            const stormTitle = document.getElementById('storm-title');
+            const stormDesc = document.getElementById('storm-desc');
+            const aiChatBox = document.getElementById('ai-chat-box');
+            const aiTitle = document.getElementById('ai-title');
+            const aiMsg = document.getElementById('ai-msg');
+            const aiInput = document.getElementById('ai-input');
+            const eventsCard = document.getElementById('events-card');
+            const eventsText = document.getElementById('events-text');
+            const eventsStatus = document.getElementById('events-status');
+            const socialCard = document.getElementById('social-card');
+            const socialText = document.getElementById('social-text');
+            const socialMsg = document.getElementById('social-msg');
+            const tripIconBg = document.getElementById('trip-icon-bg');
+            const roadIconBg = document.getElementById('road-icon-bg');
+            const roadText = document.getElementById('road-text');
+            const appFooter = document.getElementById('app-footer');
+            
+            // Buttons UI state
+            const btnDay = document.getElementById('btn-day');
+            const btnNight = document.getElementById('btn-night');
+
+            // Select all structural dashboard content items
+            const boxes = document.querySelectorAll('main div.bg-slate-50, main section div.bg-slate-50');
+
+            if (theme === 'night') {
+                // Change Button Toggles style
+                btnNight.className = "px-4 py-1.5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-xs cursor-pointer transition";
+                btnDay.className = "px-4 py-1.5 rounded-full text-sm font-semibold bg-transparent text-slate-600 hover:bg-slate-100 cursor-pointer transition";
+
+                // Canvas Background Vector Switch to Dark Starry theme
+                canvasBg.className = "w-full max-w-md rounded-[50px] p-6 shadow-2xl theme-transition bg-gradient-to-b from-slate-900 via-indigo-950 to-purple-950 relative overflow-hidden border-8 border-slate-800";
+                
+                // Outer Phone Mockup and Internal Shell styling update
+                appContainer.className = "w-full bg-slate-900/90 backdrop-blur-md rounded-[36px] shadow-lg overflow-hidden flex flex-col theme-transition text-slate-200 border border-slate-800/80";
+                document.querySelector('header').className = "p-4 flex justify-between items-center border-b border-slate-800 theme-transition";
+                locationBadge.className = "flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-slate-700 transition theme-transition";
+
+                // Hero Module
+                heroWeather.className = "bg-gradient-to-r from-slate-800 to-indigo-950 p-4 rounded-2xl flex items-center justify-between border border-indigo-900/50 theme-transition";
+                heroTemp.className = "text-4xl font-black tracking-tight text-white theme-transition";
+                heroStatus.className = "text-sm font-medium text-slate-400 mt-0.5 theme-transition";
+                heroStatus.innerText = "Clear Night • UV Index 0";
+                heroIcon.className = "fa-solid fa-moon text-4xl text-indigo-300 animate-pulse";
+
+                // Map/Loop through default gray-background module structures
+                boxes.forEach(box => {
+                    box.className = "bg-slate-800/80 p-2.5 rounded-xl text-center border border-slate-700/60 flex flex-col justify-between theme-transition";
+                });
+                // Re-adjust custom non-centered inner rows inside the list viewboxes loop helper
+                document.querySelectorAll('main section div.bg-slate-800\\/80').forEach(box => {
+                    box.classList.remove('text-center', 'flex-col', 'justify-between');
+                    box.classList.add('items-center', 'flex-row', 'gap-3');
+                });
+
+                // Storm Alert
+                stormAlert.className = "bg-rose-950/40 border border-rose-900/80 text-rose-300 p-3.5 rounded-xl flex items-start gap-3 shadow-xs animate-pulse theme-transition";
+                stormTitle.className = "font-bold text-xs uppercase tracking-wide text-rose-200 theme-transition";
+                stormDesc.className = "text-xs text-rose-300/80 mt-0.5 font-medium leading-relaxed theme-transition";
+
+                // AI Chat Box
+                aiChatBox.className = "bg-emerald-950/30 border border-emerald-900/50 p-3.5 rounded-2xl space-y-3 theme-transition";
+                aiTitle.className = "text-xs font-bold text-emerald-400 theme-transition";
+                aiMsg.className = "bg-slate-800/90 px-3 py-2 rounded-xl text-xs text-slate-300 border border-slate-700 shadow-2xs theme-transition";
+                aiInput.className = "flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-emerald-500 transition font-medium theme-transition text-white";
+
+                // Events & Social Cards Grid adjustments
+                eventsCard.className = "bg-amber-950/20 border border-amber-900/40 p-3 rounded-xl flex flex-col justify-between theme-transition";
+                eventsText.className = "flex items-center justify-between text-amber-400 theme-transition";
+                eventsStatus.className = "text-[9px] font-bold text-amber-500 mt-4 theme-transition";
+
+                socialCard.className = "bg-indigo-950/30 border border-indigo-900/40 p-3 rounded-xl flex flex-col justify-between theme-transition";
+                socialText.className = "flex items-center justify-between text-indigo-400 theme-transition";
+                socialMsg.className = "text-xs italic text-slate-400 mt-2 font-medium line-clamp-2 theme-transition";
+
+                // Bottom widgets layout icons background elements resets
+                tripIconBg.className = "w-8 h-8 bg-slate-800 text-blue-400 rounded-lg flex items-center justify-center text-xs theme-transition";
+                roadIconBg.className = "w-8 h-8 bg-slate-800 text-emerald-400 rounded-lg flex items-center justify-center text-xs theme-transition";
+                roadText.className = "text-[10px] text-emerald-400 font-bold theme-transition";
+
+                appFooter.className = "bg-slate-900/90 border-t border-slate-800 p-2 flex justify-around items-center text-slate-500 theme-transition";
+
+            } else {
+                // Day Mode Fallback Trigger
+                btnDay.className = "px-4 py-1.5 rounded-full text-sm font-semibold bg-blue-500 text-white shadow-xs cursor-pointer transition";
+                btnNight.className = "px-4 py-1.5 rounded-full text-sm font-semibold bg-transparent text-slate-600 hover:bg-slate-100 cursor-pointer transition";
+
+                canvasBg.className = "w-full max-w-md rounded-[50px] p-6 shadow-2xl theme-transition bg-gradient-to-b from-sky-300 via-sky-100 to-amber-50 relative overflow-hidden border-8 border-white";
+                appContainer.className = "w-full bg-white/90 backdrop-blur-md rounded-[36px] shadow-lg overflow-hidden flex flex-col theme-transition text-slate-800 border border-white/50";
+                document.querySelector('header').className = "p-4 flex justify-between items-center border-b border-slate-100 theme-transition";
+                locationBadge.className = "flex items-center gap-1.5 bg-slate-100/80 px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-slate-200/80 transition theme-transition";
+
+                heroWeather.className = "bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl flex items-center justify-between border border-blue-100/50 theme-transition";
+                heroTemp.className = "text-4xl font-black tracking-tight text-slate-900 theme-transition";
+                heroStatus.className = "text-sm font-medium text-slate-600 mt-0.5 theme-transition";
+                heroStatus.innerText = "Sunny • UV Index 6";
+                heroIcon.className = "fa-solid fa-sun text-4xl text-amber-500 animate-spin-slow";
+
+                boxes.forEach(box => {
+                    box.className = "bg-slate-50 p-2.5 rounded-xl text-center border border-slate-100 flex flex-col justify-between theme-transition";
+                });
+                document.querySelectorAll('main section div.bg-slate-50').forEach(box => {
+                    box.classList.remove('text-center', 'flex-col', 'justify-between');
+                    box.classList.add('items-center', 'flex-row', 'gap-3');
+                });
+
+                stormAlert.className = "bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-xl flex items-start gap-3 shadow-xs animate-pulse theme-transition";
+                stormTitle.className = "font-bold text-xs uppercase tracking-wide text-rose-900 theme-transition";
+                stormDesc.className = "text-xs text-rose-700/90 mt-0.5 font-medium leading-relaxed theme-transition";
+
+                aiChatBox.className = "bg-emerald-50/60 border border-emerald-100 p-3.5 rounded-2xl space-y-3 theme-transition";
+                aiTitle.className = "text-xs font-bold text-emerald-900 theme-transition";
+                aiMsg.className = "bg-white px-3 py-2 rounded-xl text-xs text-slate-600 border border-slate-100 shadow-2xs theme-transition";
+                aiInput.className = "flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-emerald-500 transition font-medium theme-transition text-slate-800";
+
+                eventsCard.className = "bg-amber-50/50 border border-amber-100 p-3 rounded-xl flex flex-col justify-between theme-transition";
+                eventsText.className = "flex items-center justify-between text-amber-800 theme-transition";
+                eventsStatus.className = "text-[9px] font-bold text-amber-700 mt-4 theme-transition";
+
+                socialCard.className = "bg-indigo-50/40 border border-indigo-100 p-3 rounded-xl flex flex-col justify-between theme-transition";
+                socialText.className = "flex items-center justify-between text-indigo-800 theme-transition";
+                socialMsg.className = "text-xs italic text-slate-600 mt-2 font-medium line-clamp-2 theme-transition";
+
+                tripIconBg.className = "w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs theme-transition";
+                roadIconBg.className = "w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xs theme-transition";
+                roadText.className = "text-[10px] text-emerald-600 font-bold theme-transition";
+
+                appFooter.className = "bg-slate-50/90 border-t border-slate-100 p-2 flex justify-around items-center text-slate-400 theme-transition";
+            }
+        }
+    </script>
+</body>
+</html>
